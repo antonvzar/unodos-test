@@ -7,10 +7,6 @@
 
 https://antonvzar.github.io/#/
 
-## Проект, из которого производится деплой:
-
-[GitHub Repo antonvzar.github.io](https://github.com/antonvzar/antonvzar.github.io)
-
 ## Функционал
 
 - **Авторизация через VK API**: авторизация пользователей для доступа к данным ВКонтакте
