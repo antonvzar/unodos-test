@@ -103,6 +103,7 @@ export default {
     return {
       searchQuery: "",
       searchResults: [],
+      sortedAggregatedFriends: [],
     };
   },
   computed: {
@@ -223,10 +224,32 @@ export default {
                 console.log(
                   `Количество друзей у пользователя с ID ${user_id}: ${response.response.count}`
                 );
-                this.aggregatedFriendsStore.updateFriendCount(
-                  user_id,
-                  response.response.count
+
+                // Проверяем, существует ли друг в хранилище
+                const existingFriend = this.aggregatedFriendsStore.friends.find(
+                  (f) => f.id === user_id
                 );
+
+                if (!existingFriend) {
+                  console.warn(
+                    `Друг с ID ${user_id} не найден в aggregatedFriendsStore. Добавляем его.`
+                  );
+                  this.aggregatedFriendsStore.setFriends([
+                    {
+                      id: user_id,
+                      last_name: "Неизвестно",
+                      first_name: "Неизвестно",
+                      friendsCount: response.response.count,
+                      count: 1,
+                    },
+                  ]);
+                } else {
+                  // Обновляем только friendsCount
+                  this.aggregatedFriendsStore.updateFriendCount(
+                    user_id,
+                    response.response.count
+                  );
+                }
               } else {
                 const isPrivate =
                   response.error?.error_code === 30 || // Приватный профиль

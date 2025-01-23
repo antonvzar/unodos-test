@@ -22,9 +22,20 @@ export const useAggregatedFriendsStore = defineStore("aggregatedFriends", {
     updateFriendCount(friendId, friendsCount) {
       const friendIndex = this.friends.findIndex((f) => f.id === friendId);
       if (friendIndex !== -1) {
-        this.friends[friendIndex].friendsCount =
-          friendsCount || "Приватный профиль"; // Обновляем friendsCount
-        this.friends = [...this.friends]; // Обновляем массив для реактивности
+        const updatedFriend = {
+          ...this.friends[friendIndex],
+          friendsCount: friendsCount || "Приватный профиль",
+        };
+        this.friends.splice(friendIndex, 1, updatedFriend); // Реактивное обновление массива
+      } else {
+        console.warn(
+          `Друг с ID ${friendId} не найден в aggregatedFriendsStore. Добавляем его.`
+        );
+        this.friends.push({
+          id: friendId,
+          friendsCount: friendsCount || "Приватный профиль",
+          count: 1, // Устанавливаем значение count, если нужно
+        });
       }
     },
   },
