@@ -62,7 +62,6 @@
         v-for="friend in sortedAggregatedFriends"
         :key="friend.id"
         :style="{ backgroundColor: calculateBackgroundColor(friend.count) }"
-        @click="navigateToFriend(friend.id)"
       >
         <img :src="friend.photo_200" alt="Фото друга" class="avatar" />
         <div class="info">
@@ -74,6 +73,7 @@
             ><span v-else>женский</span>
           </p>
           <p>Дата рождения: {{ friend.bdate || "не указана" }}</p>
+          <p>Количество друзей: {{ friend.friendsCount || "Загрузка..." }}</p>
           <p>Совпадений: {{ friend.count }}</p>
         </div>
       </div>
@@ -194,6 +194,11 @@ export default {
 
                 // Добавляем в общий список друзей
                 allFriends.push(...activeFriends);
+
+                // Для каждого друга получаем количество его друзей
+                activeFriends.forEach((friend) => {
+                  this.fetchFriendsCount(friend, token);
+                });
               }
               resolve();
             }
@@ -203,6 +208,23 @@ export default {
 
       // Сохраняем объединённый список друзей в aggregatedFriendsStore
       this.aggregatedFriendsStore.setFriends(allFriends);
+    },
+
+    async fetchFriendsCount(friend, token) {
+      await new Promise((resolve) => {
+        VK.Api.call(
+          "friends.get",
+          { user_id: friend.id, access_token: token, v: "5.199" },
+          (response) => {
+            if (response.response) {
+              friend.friendsCount = response.response.count; // Сохраняем количество друзей
+            } else {
+              friend.friendsCount = "Ошибка"; // Если запрос не удался
+            }
+            resolve();
+          }
+        );
+      });
     },
 
     calculateBackgroundColor(count) {
