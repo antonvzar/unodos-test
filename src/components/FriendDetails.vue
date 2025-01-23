@@ -10,6 +10,9 @@
         </p>
       </div>
 
+      <!-- Кнопка "Назад" -->
+      <button class="back-button" @click="goBack">Назад</button>
+
       <h2>Выбранные пользователи, у которых этот друг в друзьях</h2>
       <ul>
         <li v-for="user in sharedUsers" :key="user.id">
@@ -104,6 +107,9 @@ export default {
     await this.fetchFriendDetails(friendId);
   },
   methods: {
+    goBack() {
+      this.$router.go(-1); // Возвращаемся на предыдущую страницу
+    },
     async fetchFriendDetails(friendId) {
       const token = getCookie("access_token");
       if (!token) {
@@ -268,6 +274,24 @@ export default {
 };
 </script>
 <style scoped>
+.back-button {
+  display: inline-block;
+  margin: 10px 0 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #0056b3;
+}
+
 .avatar {
   width: 150px;
   height: 150px;

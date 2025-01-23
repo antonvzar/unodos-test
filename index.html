@@ -31,20 +31,30 @@
 
         const oneTap = new VKID.OneTap();
 
-        oneTap
-          .render({
-            container: document.currentScript.parentElement,
-            showAlternativeLogin: true,
-          })
-          .on(VKID.WidgetEvents.ERROR, vkidOnError)
-          .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
-            const code = payload.code;
-            const deviceId = payload.device_id;
+        if (response.error) {
+          console.error("Ошибка в запросе users.get:", response.error);
 
-            VKID.Auth.exchangeCode(code, deviceId)
-              .then(vkidOnSuccess)
-              .catch(vkidOnError);
-          });
+          // Если запрос не сработал, отобразить кнопку авторизации
+          oneTap
+            .render({
+              container: document.currentScript.parentElement,
+              showAlternativeLogin: true,
+            })
+            .on(VKID.WidgetEvents.ERROR, vkidOnError)
+            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+              const code = payload.code;
+              const deviceId = payload.device_id;
+
+              VKID.Auth.exchangeCode(code, deviceId)
+                .then(vkidOnSuccess)
+                .catch(vkidOnError);
+            });
+        } else {
+          console.log(
+            "Запрос users.get успешно выполнен:",
+            response.response[0]
+          );
+        }
 
         function vkidOnSuccess(data) {
           console.log(data);
