@@ -62,6 +62,7 @@
         v-for="friend in sortedAggregatedFriends"
         :key="friend.id"
         :style="{ backgroundColor: calculateBackgroundColor(friend.count) }"
+        @click="navigateToFriend(friend.id)"
       >
         <img :src="friend.photo_200" alt="Фото друга" class="avatar" />
         <div class="info">
@@ -183,22 +184,24 @@ export default {
               access_token: token,
               v: "5.199",
             },
-            (response) => {
+            async (response) => {
               if (response.response && response.response.items) {
                 const activeFriends = response.response.items.filter(
                   (friend) => !friend.deactivated
                 );
 
-                // Сохраняем друзей для конкретного пользователя в userFriendsStore
                 this.userFriendsStore.setFriends(user.id, activeFriends);
-
-                // Добавляем в общий список друзей
                 allFriends.push(...activeFriends);
 
-                // Для каждого друга получаем количество его друзей
-                activeFriends.forEach((friend) => {
-                  this.fetchFriendsCount(friend, token);
-                });
+                // Запрос количества друзей для каждого друга
+                for (const friend of activeFriends) {
+                  await this.fetchFriendsCount(friend.id, token);
+                }
+              } else {
+                console.error(
+                  `Ошибка при получении списка друзей для пользователя с ID ${user.id}`,
+                  response.error || "Неизвестная ошибка"
+                );
               }
               resolve();
             }
@@ -206,24 +209,42 @@ export default {
         });
       }
 
-      // Сохраняем объединённый список друзей в aggregatedFriendsStore
       this.aggregatedFriendsStore.setFriends(allFriends);
     },
 
-    async fetchFriendsCount(friend, token) {
+    async fetchFriendsCount(user_id, token) {
       await new Promise((resolve) => {
-        VK.Api.call(
-          "friends.get",
-          { user_id: friend.id, access_token: token, v: "5.199" },
-          (response) => {
-            if (response.response) {
-              friend.friendsCount = response.response.count; // Сохраняем количество друзей
-            } else {
-              friend.friendsCount = "Ошибка"; // Если запрос не удался
+        setTimeout(() => {
+          VK.Api.call(
+            "friends.get",
+            { user_id: user_id, access_token: token, v: "5.199" },
+            (response) => {
+              if (response.response) {
+                console.log(
+                  `Количество друзей у пользователя с ID ${user_id}: ${response.response.count}`
+                );
+                this.aggregatedFriendsStore.updateFriendCount(
+                  user_id,
+                  response.response.count
+                );
+              } else {
+                const isPrivate =
+                  response.error?.error_code === 30 || // Приватный профиль
+                  response.error?.error_code === 15; // Доступ запрещён
+
+                this.aggregatedFriendsStore.updateFriendCount(
+                  user_id,
+                  isPrivate ? "Приватный профиль" : "Ошибка"
+                );
+                console.error(
+                  `Ошибка при получении друзей для пользователя с ID ${user_id}`,
+                  response.error || "Неизвестная ошибка"
+                );
+              }
+              resolve();
             }
-            resolve();
-          }
-        );
+          );
+        }, 350);
       });
     },
 
